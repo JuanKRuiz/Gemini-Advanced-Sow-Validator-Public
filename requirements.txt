@@ -1,0 +1,20 @@
+# requirements.txt
+
+# SDK principal para la API de Google Gemini
+google-genai
+
+# Librería cliente para las APIs de Google (Drive, Sheets, etc.)
+google-api-python-client
+
+# Librerías de autenticación para las APIs de Google
+google-auth-httplib2
+google-auth-oauthlib
+
+# Manejo de PDFs (Splitter para Vertex AI)
+pypdf
+
+# Cliente HTTP subyacente (Control de Timeout)
+httplib2
+
+# Gestión de Variables de Entorno
+python-dotenv

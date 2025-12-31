@@ -1,0 +1,124 @@
+---
+config:
+  layout: elk
+  fontFamily: Roboto, Arial, sans-serif
+  theme: default
+  themeVariables:
+    fontFamily: Roboto, Arial, sans-serif
+---
+flowchart 
+    %% --- 1. DEFINICIÓN DE NODOS Y COMPONENTES ---
+    subgraph INPUTS ["`**Inputs**`"]
+        direction TB
+        SoWDoc("`**SoW Document**<br>PDF/Doc`"):::gcp_storage
+        SoWDoc@{ icon: "fa:file-word" }
+        Config("`**Config & Rules**`"):::gcp_storage
+        Config@{ icon: "fa:file-lines" }
+    end
+
+    %% --- Core Application Logic (Dissolved Subgraph) ---
+    App("`**Application**`"):::gcp_service
+    App@{ icon: "fa:file-code" }
+    
+    AppInit{{"`**Init & Auth**`"}}:::gcp_service
+    AppInit@{ icon: "gcp:identity-and-access-management" }
+    
+    SowOrch("`**SowReviewOrchestrator**`"):::gcp_service
+    SowOrch@{ icon: "gcp:cloud-run" }
+    
+    GeminiOrch("`**GeminiOrchestrator**`"):::gcp_service
+    GeminiOrch@{ icon: "gcp:vertexai" }
+    
+    KB_Loader("`**_KnowledgeBaseLoader**`"):::gcp_service
+    KB_Loader@{ icon: "fa:rectangle-list" }
+    
+    ModeCheck{{"`**Mode?**`"}}:::gcp_service_alt
+    ModeCheck@{ icon: "fa:circle-question" }
+    
+    %% Reference Receivers
+    Ref1_In((1)):::ref
+
+    subgraph HELPERS ["`**Integration Helpers**`"]
+        DriveHelper("`**GoogleDriveHelper**`"):::gcp_service
+        DriveHelper@{ icon: "fa:folder-open" }
+        
+        SheetsHelper("`**GoogleSheetsHelper**`"):::gcp_service
+        SheetsHelper@{ icon: "fa:file-excel" }
+    end
+
+    subgraph CLOUD_APIS ["`**Google Cloud & GenAI APIs**`"]
+        VertexAPI("`**Vertex AI API**<br>(Enterprise)`"):::gcp_service
+        VertexAPI@{ icon: "gcp:vertexai" }
+        
+        DevAPI("`**Gemini Developer API**<br>(AI Studio)`"):::gcp_service
+        DevAPI@{ icon: "gcp:developer-portal" }
+        
+        DriveAPI("`**Google Drive API**`"):::gcp_service
+        DriveAPI@{ icon: "gcp:cloud-storage" }
+        
+        SheetsAPI("`**Google Sheets API**`"):::gcp_service
+        SheetsAPI@{ icon: "gcp:api" }
+    end
+
+    subgraph OUTPUTS ["`**Outputs**`"]
+        Report("`**Validation Report**<br>Google Sheets`"):::gcp_storage
+        Report@{ icon: "fa:file-excel" }
+    end
+
+    %% Floating Helper (Visual Separation)
+    PdfSplit("`**PdfSplitterHelper**`"):::gcp_service
+    PdfSplit@{ icon: "fa:hand-scissors" }
+
+    %% Reference Emitters
+    Ref1_Out_Vertex((1)):::ref
+
+    %% --- 2. DEFINICIÓN DE FLUJOS Y CONEXIONES ---
+    %% Flujo Principal
+    App --> AppInit
+    AppInit -- "Detects Mode<br>(Project ID vs API Key)" --> GeminiOrch
+    App -- Runs --> SowOrch
+    
+    SowOrch -- "1.Load Context" --> KB_Loader
+    SowOrch -- "2.Analyze SoW" --> GeminiOrch
+    SowOrch -- "3.Generate Report" --> SheetsHelper
+
+    %% Carga de Conocimiento
+    KB_Loader -- "Downloads Prompts/Checklist" --> DriveHelper
+    DriveHelper -- "Export/Download" --> DriveAPI
+    INPUTS -.-> DriveAPI
+    KB_Loader -- "Process Files" --> GeminiOrch
+
+    %% Lógica Dual (Vertex vs Developer)
+    GeminiOrch -- "is_vertex_ai_mode?" --> ModeCheck
+    
+    %% Camino Vertex AI
+    ModeCheck -- "Vertex AI" --> CheckSize{{"`**> 10MB?**`"}}:::gcp_service_alt
+    CheckSize -- Yes --> PdfSplit
+    PdfSplit -- "Fragment & Inline" --> VertexAPI
+    CheckSize -- No --> VertexAPI
+    
+    %% Camino Developer API
+    ModeCheck -- "Developer API<br>(File Service Strategy)" --> DevAPI
+
+    %% Inferencia (Reference Connector Strategy)
+    VertexAPI & DevAPI -- "Gemini 3.0 Pro<br>(Thinking Mode)" --> Ref1_Out_Vertex
+    
+    Ref1_In --> GeminiOrch
+
+    %% Reporte
+    SheetsHelper -- "Writes Data" --> SheetsAPI
+    SheetsAPI --> Report
+
+    %% --- 3. DEFINICIÓN DE ESTILOS ---
+    classDef gcp_service fill:#e1f5fe,stroke:#1967D2,color:#000
+    classDef gcp_service_alt fill:#e1f5fe,stroke:#1967D277,color:#000
+    classDef gcp_storage fill:#f1f7e9,stroke:#1E8E3E,color:#000
+    classDef gcp_db fill:#ffebed,stroke:#d93025,color:#000
+    classDef invisible fill:none,stroke:none
+    classDef ref fill:#fff,stroke:#333,stroke-width:1px,stroke-dasharray: 5 5,color:#333
+    
+    %% Estilos de Subgrafos
+    style HELPERS fill:#f9f9f9,stroke:#bdc1c6,color:#000
+    style CLOUD_APIS fill:#e3f2fd,stroke:#1a73e8,stroke-dasharray: 5 5
+    style INPUTS fill:#fff3e0,stroke:#f57c00,stroke-dasharray: 5 5
+    style OUTPUTS fill:#e8f5e9,stroke:#1b5e20,stroke-dasharray: 5 5
