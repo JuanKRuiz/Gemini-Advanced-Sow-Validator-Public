@@ -14,11 +14,10 @@ else:
     print(f"✅ SoW URL received: {SOW_URL}")
     print("You can now proceed to run the rest of the notebook.")
 
-# --- System Configuration ---
-#@markdown ⚙️ **System Configuration (URLs):**
-PROMPT_URL    = "PUT_YOUR_PROMPT_URL_HERE" #@param {type:"string"}
-CHECKLIST_URL = "PUT_YOUR_CHECKLIST_URL_HERE" #@param {type:"string"}
-TEMPLATE_URL  = "PUT_YOUR_TEMPLATE_URL_HERE" #@param {type:"string"}
-TARGET_SHEET_NAME = "Checklist Template" #@param {type:"string"}
+# --- System Configuration (Private) ---
+PROMPT_URL    = "YOUR_PROMPT_DOC_URL_HERE"
+CHECKLIST_URL = "YOUR_CHECKLIST_SHEET_URL_HERE"
+TEMPLATE_URL  = "YOUR_REPORT_TEMPLATE_URL_HERE"
+TARGET_SHEET_NAME = "Checklist Template"
 START_CELL = "B26"
 GEMINI_MODEL_NAME = "gemini-3-pro-preview"
