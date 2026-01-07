@@ -21,6 +21,85 @@ The architecture is designed around a central orchestrator that coordinates a se
 
 ![Flowchart](img/readme-mermaid.png)
 
+### 3.1. Class Diagram
+```mermaid
+%%{init:
+    {
+        /*'theme': 'base', -*
+        'themeVariables': 
+        {
+            'fontFamily': 'Roboto', 
+            'edgeLabelBackground': '#ffffff'
+        }
+    }
+}%%
+classDiagram
+    direction TB
+
+    %% --- CLASSES (VARIANT: SIMPLIFIED) ---
+    %% Only public key methods, no implementation details
+
+    class Application:::app {
+        +run(sow_url)
+    }
+
+    class SowReviewOrchestrator:::orchestrator {
+        +run()
+    }
+
+    class GeminiOrchestrator:::orchestrator {
+        +start_chat_session()
+        +send_message()
+    }
+
+    class GoogleDriveHelper:::helper {
+        +download_file_content()
+        +export_file()
+    }
+
+    class GoogleSheetsHelper:::helper {
+        +write_data()
+    }
+
+    class PdfSplitterHelper:::helper {
+        +split_pdf()
+    }
+
+    class _KnowledgeBaseLoader:::helper {
+        +load()
+    }
+
+    class LocalAuthHelper:::auth {
+        +authenticate()
+    }
+
+    class ColabAuthHelper:::auth {
+        +authenticate()
+    }
+
+    %% --- RELATIONSHIPS (TRUNK ONLY) ---
+    
+    Application --> LocalAuthHelper
+    Application --> ColabAuthHelper
+    Application --> SowReviewOrchestrator : Runs
+
+    SowReviewOrchestrator o-- GeminiOrchestrator
+    SowReviewOrchestrator o-- GoogleDriveHelper
+    SowReviewOrchestrator o-- GoogleSheetsHelper
+    SowReviewOrchestrator --> _KnowledgeBaseLoader : Uses
+
+    _KnowledgeBaseLoader ..> GoogleDriveHelper
+    _KnowledgeBaseLoader ..> GeminiOrchestrator
+    
+    GeminiOrchestrator ..> PdfSplitterHelper
+
+    %% --- STYLE DEFINITIONS (Must be at the END) ---
+    classDef orchestrator fill:#ffffff,stroke:#4285F4,stroke-width:3px,color:#000
+    classDef helper fill:#ffffff,stroke:#34A853,stroke-width:2px,color:#000
+    classDef auth fill:#ffffff,stroke:#FBBC04,stroke-width:2px,color:#000
+    classDef app fill:#ffffff,stroke:#5F6368,stroke-width:2px,color:#000
+```
+
 
 ### Architectural Justification:
 *   **Modularity:** The separation of orchestrators and helpers (e.g., `GeminiOrchestrator`, `GoogleDriveHelper`) allows for independent testing and maintenance. Swapping out a service (e.g., moving from Google Drive to a local file system) would only require modifying the relevant helper, not the core business logic.
